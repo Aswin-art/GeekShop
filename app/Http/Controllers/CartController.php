@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Kirim;
 use App\Models\Order;
 use App\Models\Produk;
+use App\Models\orderDetail;
 use Darryldecode\Cart\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Http\Controllers\Controller;
-use App\Models\orderDetail;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 
 class CartController extends Controller
 {
@@ -21,23 +22,68 @@ class CartController extends Controller
      */
     public function index()
     {
-        $items = \Cart::getContent();
+        $items = session('cart');
+        // dd($items);
         $kurirs = Kirim::all();
         return view('cart.index', compact('items', 'kurirs'));
     }
 
-    public function add(Request $request){
-        $produk = Produk::find($request->input('idProduk'));
-        \Cart::add([
-            'id' => $produk->id,
-            'name' => $produk->namaProduk,
-            'quantity' => $request->input('jumlah'),
-            'price' => $produk->hargaProduk
-        ]);
+    public function add(Request $request, $id){
+        $produk = Produk::find($id);
+        if(!$produk){
+            return abort(404);
+        }
+        // dd($id);
+        $cart = session()->get('cart');
+
+        if(!$cart){
+            $cart = [
+                $id => [
+                    'idProduk' => $id,
+                    'jumlah' => $request->input('jumlah'),
+                    'namaProduk' => $produk->namaProduk,
+                    'hargaProduk' => $produk->hargaProduk,
+                    'idKategori' => $produk->idKategori,
+                    'beratProduk' => $produk->beratProduk
+                ]
+            ];
+
+            session()->put('cart', $cart);
+            return redirect()->back();
+        }
+
+        // dd($cart);
+
+        if(isset($cart[$id])){
+            $cart[$id]['jumlah'] += $request->input('jumlah');
+            session()->put('cart', $cart);
+            return redirect()->back();
+        }
+
+        $cart[$id] = [
+            'idProduk' => $id,
+            'jumlah' => $request->input('jumlah'),
+            'namaProduk' => $produk->namaProduk,
+            'hargaProduk' => $produk->hargaProduk,
+            'idKategori' => $produk->idKategori,
+            'beratProduk' => $produk->beratProduk
+        ];
+
+        session()->put('cart', $cart);
+        return redirect()->back();
+
+
+        // \Cart::add([
+        //     'id' => $produk->id,
+        //     'name' => $produk->namaProduk,
+        //     'quantity' => $request->input('jumlah'),
+        //     'price' => $produk->hargaProduk
+        // ]);
 
         // Cart::add($produk->id, $produk->namaProduk, $request->input('jumlah'), $produk->hargaProduk, $produk->beratProduk);
-        return redirect()->back()->with('messageAdd', 'Produk added to cart');
+        // return redirect()->back()->with('messageAdd', 'Produk added to cart');
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -117,10 +163,10 @@ class CartController extends Controller
     }
 
     public function checkout(Request $request){
-        
+        $items = session('cart');
         if(Auth::check()){
 
-            $items = \Cart::getContent();
+            // $items = \Cart::getContent();
 
             $order = Order::create([
                 'orderDate' => Carbon::now(),
@@ -131,19 +177,30 @@ class CartController extends Controller
 
             $orderDetail = new orderDetail();
             
-            foreach ($items as $item) {
-                $orderDetail->jumlahBarang = $item->quantity;
-                $orderDetail->idProduk = $item->id;
+            foreach ($items as $id => $detail) {
+                // dd($order->id);
+                $orderDetail->jumlahBarang = $detail['jumlah'];
+                $orderDetail->idProduk = $detail['idProduk'];
                 $orderDetail->idOrder = $order->id;
                 $orderDetail->totalHarga = $request->input('totalHarga');
             }
 
+            // dd($orderDetail);
+
             $orderDetail->save();
 
-            \Cart::clear();
+            // session('cart')->flush();
+            foreach ($items as $id => $value) {
+                unset($items[$id]);
+                session()->put('cart', $items);
+            }
             return redirect()->route('shop')->with('messageCheckout', 'Berhasil beli');
         }else{
-            \Cart::clear();
+
+            foreach ($items as $id => $value) {
+                unset($items[$id]);
+                session()->put('cart', $items);
+            }
             return redirect()->route('user.login');
         }
     }

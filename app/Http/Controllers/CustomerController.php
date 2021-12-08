@@ -107,13 +107,18 @@ class CustomerController extends Controller
     {   
         $id = Auth::id();
         $orders = Order::where('idCustomer', $id)->get();
+        // dd($orders);
+        
+        $orderId = [];
+        $orderDetails = [];
         foreach ($orders as $order) {
             $orderId[] = array('id' => $order->id);
         }
+
         foreach ($orderId as $item) {
             $orderDetails[] = orderDetail::where('idOrder', $item)->get();
         }
-        // dd($orderDetails);
+
         return view('profile', [
             'customer' => Auth::user(),
             'orderDetails' => $orderDetails,

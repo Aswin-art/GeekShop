@@ -22,6 +22,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/shop', [ProdukController::class, 'index'])->name('shop');
+Route::get('/cobak', [ProdukController::class, 'cobak'])->name('cobak');
 
 
 Route::prefix('/user')->group(function(){
@@ -40,7 +41,7 @@ Route::prefix('/user')->group(function(){
 });
 
 Route::prefix('/cart')->group(function(){
-    Route::post('/add', [CartController::class, 'add'])->name('cart.add');
+    Route::post('/add/{id}', [CartController::class, 'add'])->name('cart.add');
     Route::post('/update', [CartController::class, 'update'])->name('cart.update');
     Route::get('/clear', [CartController::class, 'clear'])->name('cart.clear');
     Route::get('/detail', [CartController::class, 'index'])->name('cart.detail');

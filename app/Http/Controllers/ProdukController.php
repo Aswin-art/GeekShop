@@ -7,6 +7,7 @@ use App\Models\Produk;
 use Darryldecode\Cart\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Session;
 
 class ProdukController extends Controller
 {
@@ -22,6 +23,15 @@ class ProdukController extends Controller
             'produks' => Produk::all(),
             'items' => $items
         ]);
+    }
+
+    public function cobak()
+    {   
+       $id = 13;
+       Session::put('product_id', $id);
+       $getId = Session::all();
+    //    dd(is_array($getId));
+       return view('cobak', compact('getId'));
     }
 
     /**

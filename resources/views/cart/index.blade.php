@@ -10,10 +10,30 @@
 </div>
 
 <div class="list-item">
+    @php
+        $total = 0;
+        $totalHarga = 0;
+    @endphp
     <ul>
         <form action="{{ route('cart.checkout') }}" method="post">
             @csrf
-            @foreach ($items as $item)
+            @if (session('cart'))
+                @foreach ($items as $id => $detail)
+                @php
+                    $total += $detail['jumlah'];
+                    $totalHarga += ($detail['jumlah'] * $detail['hargaProduk']);
+                @endphp
+                    id:
+                    <input type="text" name="id" value="{{ $detail['idProduk'] }}" readonly>
+                    nama:
+                    <input type="text" name="namaProduk" value="{{ $detail['namaProduk'] }}" readonly>
+                    harga:
+                    <input type="text" name="hargaProduk" value="{{ $detail['hargaProduk'] }}" readonly>
+                    jumlah:
+                    <input type="text" name="jumlah" value="{{ $detail['jumlah'] }}" readonly>
+                @endforeach
+            @endif
+            {{-- @foreach ($items as $item)
                 @if ($item->quantity > 0)
                     id:
                     <input type="text" name="id" value="{{ $item->id }}" readonly>
@@ -24,9 +44,9 @@
                     jumlah:
                     <input type="text" name="quantity" value="{{ $item->quantity }}" readonly>
                 @endif
-            @endforeach
+            @endforeach --}}
 
-            @if (\Cart::getTotalQuantity())
+            @if (session('cart'))
                 <div class="bagian-kurir" style="margin-top: 40px;">
                     <p>Pilih kurir</p>
                     <select name="kurir" id="kurir">
@@ -36,8 +56,8 @@
                     </select>
                 </div>
 
-                <input type="hidden" name="totalOrder" value="{{ \Cart::getContent() }}">
-                <input type="hidden" name="totalHarga" value="{{ \Cart::getTotal() }}">
+                <input type="hidden" name="totalOrder" value="{{ $total }}">
+                <input type="hidden" name="totalHarga" value="{{ $totalHarga }}">
 
                 <button type="submit">Checkout</button>
             @endif

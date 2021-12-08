@@ -9,7 +9,7 @@ class Kategori extends Model
 {
     use HasFactory;
 
-    protected $guard = ['id'];
+    protected $guarded = [];
 
    /**
     * Get all of the comments for the Kategori
